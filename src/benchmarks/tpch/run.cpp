@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
                        },
                        repetitions);
    if (q.count("1i"))
-      e.timeAndProfile("q1 rof       ", nrTuples(tpch, {"lineitem"}),
+      e.timeAndProfile("q1 imv       ", nrTuples(tpch, {"lineitem"}),
                        [&]() {
                           if (clearCaches) clearOsCaches();
                           auto result = q1_imv(tpch, nrThreads);
