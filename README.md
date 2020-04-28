@@ -1,5 +1,5 @@
 # Clone of the IMV Repo
-Please go to https://github.com/fzhedu/db-imv
+Without tagged hash table, for the original go to https://github.com/fzhedu/db-imv
 
 
 
