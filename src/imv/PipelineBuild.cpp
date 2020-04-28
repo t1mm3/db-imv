@@ -48,7 +48,7 @@ size_t build_gp_qa(size_t begin, size_t end, Database& db, runtime::Hashmap* has
     }
     stage2_num = k;
     for (k = 0; k < stage2_num; ++k) {
-      hash_table->insert_tagged(state[k].ptr, state[k].hash_value);
+      hash_table->insert(state[k].ptr, state[k].hash_value);
       ++found;
     }
 
@@ -107,7 +107,7 @@ size_t build_imv_qa(size_t begin, size_t end, Database& db, runtime::Hashmap* ha
         break;
       case 0: {
         /// scalar codes due to writhe conflicts among multi-threads
-        hash_table->insert_tagged_sel((Vec8u*) (&state[k].v_entry_addr), (Vec8u*) (&state[k].v_hash_value), state[k].m_valid);
+        hash_table->insert_sel((Vec8u*) (&state[k].v_entry_addr), (Vec8u*) (&state[k].v_hash_value), state[k].m_valid);
         found += _mm_popcnt_u32(state[k].m_valid);
         state[k].stage = 1;
         state[k].m_valid = 0;
@@ -187,7 +187,7 @@ size_t build_pipeline_imv_qa(size_t begin, size_t end, Database& db, runtime::Ha
         break;
       case 0: {
         /// scalar codes due to writhe conflicts among multi-threads
-        hash_table->insert_tagged_sel((Vec8u*) (&state[k].v_entry_addr), (Vec8u*) (&state[k].v_hash_value), state[k].m_valid);
+        hash_table->insert_sel((Vec8u*) (&state[k].v_entry_addr), (Vec8u*) (&state[k].v_hash_value), state[k].m_valid);
         found += _mm_popcnt_u32(state[k].m_valid);
         state[k].stage = 1;
         state[k].m_valid = 0;

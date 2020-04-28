@@ -46,6 +46,15 @@ class Hashmap {
   /// Insert entry into chain for the given hash
   template<bool concurrentInsert = true>
   inline void insert(EntryHeader* entry, hash_t hash);
+
+  inline void insert_sel(Vec8u* entry, Vec8u* hash, __mmask8 sel){
+  for (int i = 0; i < 8; ++i) {
+    if(sel & (1<<i)) {
+      insert((EntryHeader*) (entry->entry[i]), hash->entry[i]);
+    }
+  }
+}
+
   /// Insert entry into chain for the given hash
   /// Updates tag
   template<bool concurrentInsert = true>
