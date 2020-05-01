@@ -310,7 +310,7 @@ void inline Hashmap::clear() {
   }
 }
 
-template<typename K, typename V, typename H, bool useTags = false>
+template<typename K, typename V, typename H, bool useTags = true>
 class Hashmapx : public Hashmap {
   H hasher;
   size_t nrEntries = 0;
@@ -504,7 +504,7 @@ Hashmap::hash_t Hashmapx<K, V, H, useTags>::hash(const K& key, hash_t seed) {
   return hasher(key, seed);
 }
 
-template<typename K, typename H, bool useTags = false>
+template<typename K, typename H, bool useTags = true>
 class Hashset : public Hashmap {
   H hasher;
 //   static const uint64_t seed = 902850234;

@@ -696,7 +696,7 @@ size_t _filter_probe_imv_nobuf(size_t begin, size_t end, Database& db, runtime::
         break;
       case 2: {
         /// step 4: find the addresses of corresponding buckets for new probes
-        Vec8uM v_new_bucket_addrs = hash_table->find_chain((imv_state[k].v_probe_hash));
+        Vec8uM v_new_bucket_addrs = hash_table->find_chain_tagged((imv_state[k].v_probe_hash));
         imv_state[k].m_valid_probe = _mm512_kand(imv_state[k].m_valid_probe, v_new_bucket_addrs.mask);
         imv_state[k].v_bucket_addrs = v_new_bucket_addrs.vec;
 #if 0
