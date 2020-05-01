@@ -1,6 +1,6 @@
 # Modified IMV Repo
 * Includes some experiments to understand IMV further
-* Branch 'notag' disables hash table tagging (works like a Bloom filter for hash chains)
+* Branch 'notag' (https://github.com/t1mm3/db-imv-clone/tree/notag) disables hash table tagging (works like a Bloom filter for hash chains)
 * For the original repo see https://github.com/fzhedu/db-imv
 
 # Interleaved Multi-Vectorizing (IMV)
