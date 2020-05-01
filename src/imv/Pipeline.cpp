@@ -75,7 +75,7 @@ size_t filter_probe_scalar(size_t begin, size_t end, Database& db, runtime::Hash
     if (constrants > l_quantity_col[i].value) {
       auto probeKey = l_orderkey[i].value;
       auto probeHash = runtime::MurMurHash()(probeKey, vectorwise::primitives::seed);
-      auto buildMatch = hash_table->find_chain_tagged(probeHash);
+      auto buildMatch = hash_table->find_chain(probeHash);
 
       for (auto entry = buildMatch; entry != nullptr; entry = entry->next) {
         uint32_t buildkey = *((uint32_t*) (((void*) entry) + build_key_off));
@@ -250,7 +250,7 @@ size_t filter_probe_imv1(size_t begin, size_t end, Database& db, runtime::Hashma
         break;
       case 2: {
         /// step 4: find the addresses of corresponding buckets for new probes
-        Vec8uM v_new_bucket_addrs = hash_table->find_chain_tagged((imv_state[k].v_probe_hash));
+        Vec8uM v_new_bucket_addrs = hash_table->find_chain((imv_state[k].v_probe_hash));
         imv_state[k].m_valid_probe = _mm512_kand(imv_state[k].m_valid_probe, v_new_bucket_addrs.mask);
         imv_state[k].v_bucket_addrs = v_new_bucket_addrs.vec;
         imv_state[k].stage = 0;
@@ -465,7 +465,7 @@ size_t filter_probe_imv(size_t begin, size_t end, Database& db, runtime::Hashmap
         break;
       case 2: {
         /// step 4: find the addresses of corresponding buckets for new probes
-        Vec8uM v_new_bucket_addrs = hash_table->find_chain_tagged((imv_state[k].v_probe_hash));
+        Vec8uM v_new_bucket_addrs = hash_table->find_chain((imv_state[k].v_probe_hash));
         imv_state[k].m_valid_probe = _mm512_kand(imv_state[k].m_valid_probe, v_new_bucket_addrs.mask);
         imv_state[k].v_bucket_addrs = v_new_bucket_addrs.vec;
 #if 0
@@ -925,7 +925,7 @@ size_t filter_probe_imv2(size_t begin, size_t end, Database& db, runtime::Hashma
         break;
       case 2: {
         /// step 4: find the addresses of corresponding buckets for new probes
-        Vec8uM v_new_bucket_addrs = hash_table->find_chain_tagged((imv_state[k].v_probe_hash));
+        Vec8uM v_new_bucket_addrs = hash_table->find_chain((imv_state[k].v_probe_hash));
         imv_state[k].m_valid_probe = _mm512_kand(imv_state[k].m_valid_probe, v_new_bucket_addrs.mask);
         imv_state[k].v_bucket_addrs = v_new_bucket_addrs.vec;
         imv_state[k].stage = 0;
