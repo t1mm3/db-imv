@@ -272,6 +272,97 @@ bool Qa_imv(Database& db, size_t nrThreads) {
   leaveQuery(nrThreads);
   return true;
 }
+
+bool Qa_imv_nobuf(Database& db, size_t nrThreads, bool hyper_build, bool extra_indirection) {
+  ptimer.reset();
+  ptimer.log_time("start");
+  auto resources = initQuery(nrThreads);
+  auto& ord = db["orders"];
+  auto& li = db["lineitem"];
+  auto o_orderkey = ord["o_orderkey"].data<types::Integer>();
+  auto l_orderkey = li["l_orderkey"].data<types::Integer>();
+  auto o_orderdate = ord["o_orderdate"].data<types::Date>();
+  auto l_quantity_col = li["l_quantity"].data<types::Numeric<12, 2>>();
+
+  using hash = runtime::MurMurHash;
+  using range = tbb::blocked_range<size_t>;
+  const auto add = [](const size_t& a, const size_t& b) {return a + b;};
+
+// build a hash table from [orders]
+  Hashset<types::Integer, hash> ht1;
+  tbb::enumerable_thread_specific<runtime::Stack<decltype(ht1)::Entry>> entries1;
+  size_t tuples = ord.nrTuples;
+  tbb::enumerable_thread_specific<vector<uint64_t>> position;
+  auto entry_size = sizeof(decltype(ht1)::Entry);
+
+  size_t found1;
+  if (hyper_build) {
+    found1 = tbb::parallel_reduce(range(0, tuples, morselSize), 0, [&](const tbb::blocked_range<size_t>& r, const size_t& f) {
+      auto found = f;
+      auto& entries = entries1.local();
+      for (size_t i = r.begin(), end = r.end(); i != end; ++i) {
+        if(o_orderdate[i] < constrant_o_orderdate) {
+          entries.emplace_back(ht1.hash(o_orderkey[i]), o_orderkey[i]);
+          found++;
+        }
+      }
+      return found;
+    },
+                                       add);
+    ht_date_size = found1;
+    ht1.setSize(found1);
+    parallel_insert(entries1, ht1);
+  } else {
+    ht1.setSize(ht_date_size);
+
+    found1 = tbb::parallel_reduce(range(0, tuples, morselSize), 0, [&](const tbb::blocked_range<size_t>& r, const size_t& f) {
+      auto found = f;
+      auto pos_buff = position.local();
+      pos_buff.clear();
+      pos_buff.resize(ROF_VECTOR_SIZE);
+      found +=build_pipeline_imv_qa(r.begin(),r.end(),db,&ht1,&this_worker->allocator,entry_size,constrant_o_orderdate);
+
+      return found;
+    },
+                                       add);
+  }
+  ptimer.log_time("build");
+#if DEBUG
+  cout << "Build hash table tuples num = " << found1 << endl;
+  ht1.printStaTag();
+#endif
+
+  tbb::enumerable_thread_specific<vector<uint32_t>> probe_offset;
+  tbb::enumerable_thread_specific<vector<void*>> build_addr;
+  tbb::enumerable_thread_specific<vector<uint64_t>> rof_buffer;
+
+  uint64_t found2 = 0;
+  found2 = tbb::parallel_reduce(range(0, li.nrTuples, morselSize), 0, [&](const tbb::blocked_range<size_t>& r, const size_t& f) {
+    auto found = f;
+    auto rof_buff = rof_buffer.local();
+    rof_buff.clear();
+    rof_buff.resize(ROF_VECTOR_SIZE);
+    auto probe_off = probe_offset.local();
+    probe_off.clear();
+    probe_off.resize(morselSize);
+    auto build_add = build_addr.local();
+    build_add.clear();
+    build_add.resize(morselSize);
+
+    found+=filter_probe_imv_nobuf(r.begin(),r.end(),db,&ht1,&build_add[0],&probe_off[0],&rof_buff[0], extra_indirection);
+
+    return found;
+  },
+                                add);
+  ptimer.log_time("probe");
+
+#if PrintResults
+  cout << "Nobuf results num :" << found2 << endl;
+#endif
+
+  leaveQuery(nrThreads);
+  return true;
+}
 bool Qa_rof(Database& db, size_t nrThreads) {
   ptimer.reset();
   ptimer.log_time("start");
@@ -533,6 +624,26 @@ int main(int argc, char* argv[]) {
   },
                    repetitions);
   ptimer.print();
+  e.timeAndProfile("imv-nobuf", nrTuples(tpch, { "orders", "lineitem" }), [&]() {
+    Qa_imv_nobuf(tpch, nrThreads, false, false);
+  },
+                   repetitions);
+  ptimer.print();
+  e.timeAndProfile("imv-nobuf-hyperbuild", nrTuples(tpch, { "orders", "lineitem" }), [&]() {
+    Qa_imv_nobuf(tpch, nrThreads, true, false);
+  },
+                   repetitions);
+  ptimer.print();
+  e.timeAndProfile("imv-nobuf-xindir", nrTuples(tpch, { "orders", "lineitem" }), [&]() {
+    Qa_imv_nobuf(tpch, nrThreads, false, true);
+  },
+                   repetitions);
+  ptimer.print();
+  e.timeAndProfile("imv-nobuf-hyperbuild-xindir", nrTuples(tpch, { "orders", "lineitem" }), [&]() {
+    Qa_imv_nobuf(tpch, nrThreads, true, true);
+  },
+                   repetitions);
+  ptimer.print();
   e.timeAndProfile("rof", nrTuples(tpch, { "orders", "lineitem" }), [&]() {
     Qa_rof(tpch, nrThreads);
   },
@@ -544,6 +655,7 @@ int main(int argc, char* argv[]) {
                    repetitions);
   ptimer.print();
   test_vectorwise_sel_probe(tpch, nrThreads, e);
+
   scheduler.terminate();
   return 0;
 }

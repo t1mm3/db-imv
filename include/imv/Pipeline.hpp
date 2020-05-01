@@ -13,3 +13,6 @@ size_t filter_probe_imv(size_t begin, size_t end, Database& db, runtime::Hashmap
 size_t filter_probe_imv1(size_t begin, size_t end, Database& db, runtime::Hashmap* hash_table, void** output_build, uint32_t*output_probe, uint64_t* pos_buff=nullptr);
 size_t filter_probe_imv2(size_t begin, size_t end, Database& db, runtime::Hashmap* hash_table, void** output_build, uint32_t*output_probe, uint64_t* pos_buff=nullptr);
 
+
+
+size_t filter_probe_imv_nobuf(size_t begin, size_t end, Database& db, runtime::Hashmap* hash_table, void** output_build, uint32_t*output_probe, uint64_t* pos_buff, bool extra_indirection);
