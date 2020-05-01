@@ -1,7 +1,7 @@
-# Clone of the IMV Repo
-Without tagged hash table, for the original go to https://github.com/fzhedu/db-imv
-
-
+# Modified IMV Repo
+* Includes some experiments to understand IMV further
+* Branch 'notag' disables hash table tagging (works like a Bloom filter for hash chains)
+* For the original repo see https://github.com/fzhedu/db-imv
 
 # Interleaved Multi-Vectorizing (IMV)
   This repository contains a collection of experiments to test the effects of IMV. It is mainly composed of two parts:
